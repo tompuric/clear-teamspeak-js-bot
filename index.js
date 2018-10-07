@@ -2,7 +2,7 @@ var Discord = require('discord.js');
 var Stream = require('stream');
 var logger = require('winston');
 var fs = require('fs');
-const ffmpeg = require('fluent-ffmpeg');
+const ffmpeg = require('ffmpeg-binaries');
 var auth = require('./auth.json');
 
 console.log("Starting");
@@ -28,6 +28,8 @@ bot.on('ready', function (evt) {
   voiceChannel.join().then(connection => {
     const receiver = connection.createReceiver();
 
+
+
     // voiceChannel.members.array().forEach(member => {
     // console.log(member.user);
     console.log(voiceChannel.members.array()[0].user);
@@ -37,22 +39,37 @@ bot.on('ready', function (evt) {
     connection.on('speaking', (user, speaking) => {
       if (speaking) {
         console.log('recording');
-        const voiceStream = receiver.createOpusStream(user);
+        const voiceStream1 = receiver.createOpusStream(user);
+        // voiceStream1.pipe((data) => console.log(data));
+        // const voiceStream2 = receiver.createPCMStream(user);
+        // voiceStream1.
+        let fileStream = fs.createWriteStream('./audiotest.pcm');
+        voiceStream1.pipe(fileStream);
 
-        voiceStream.on('data', chunk => {
-          console.log(`Received ${chunk.length} bytes of data.`);
+        voiceStream1.on('data', chunk => {
+          console.log(`Received DATA ${chunk.length} bytes of data.`);
         });
 
-        voiceStream.on('opus', chunk => {
-          console.log(`Received ${chunk.length} bytes of data.`);
+        voiceStream1.on('opus', chunk => {
+          console.log(`Received OPUS ${chunk.length} bytes of data.`);
         });
 
-        voiceStream.on('pcm', chunk => {
-          console.log(`Received ${chunk.length} bytes of data.`);
+        voiceStream1.on('pcm', chunk => {
+          console.log(`Received PCM ${chunk.length} bytes of data.`);
         });
 
-        voiceStream.on('pcm', chunk => {
-          console.log(`Received ${chunk.length} bytes of data.`);
+        voiceStream1.on('end', () => {
+          console.log(`Received END bytes of data.`);
+          fileStream.end();
+          // voiceStream1.destroy();
+        });
+
+        voiceStream1.on('error', chunk => {
+          console.log(`Received ERROR ${chunk} bytes of data.`);
+        });
+
+        voiceStream1.on('start', chunk => {
+          console.log(`Received CLOSE ${chunk} bytes of data.`);
         });
         // try {
         //   const out = fs.createWriteStream('./audio.wav');
@@ -68,69 +85,9 @@ bot.on('ready', function (evt) {
         //   console.log(error);
         // }
       }
-      // console.log(user);
-
-
-      // var dest = new Stream();
-      // dest.writable = true;
-      // dest.write = function (data) {
-      //   console.log(data);
-      // };
-      // receiver.createOpusStream(user).pipe(dest);
-      // if (speaking && voiceChannel.members.has(user.id)) {
-
-      //   let speaker = voiceChannel.members.find(val => val.id === user.id).displayName;
-
-      // }
     });
   })
 });
-// console.log(bot);
-
-/*
-bot.joinVoiceChannel(progressionChannel, function (error, events) {
-  //Check to see if any errors happen while joining.
-  if (error) {
-    return console.error(error);
-  }
-
-  events.on('speaking', function (userID, SSRC, speakingBool) {
-    //This will log either "[userID] is speaking" or "[userID] is done speaking"
-    console.log("%s (%s): %s is %s", SSRC, userID, bot.users[userID].username, (speakingBool ? "speaking" : "done speaking"));
-  });
-
-  // //Then get the audio context
-  bot.getAudioContext({
-    channelID: progressionChannel,
-    maxStreamSize: 50 * 1024
-  }, function (error, stream) {
-    //Once again, check to see if any errors exist
-    if (error) return console.error(error);
-
-    console.log(stream);
-
-    //You can access a Member's stream
-    //Members are Readable Streams
-    if (stream.members['239307034305101824']) {
-      //Will give you all of the PCM data saved for this user.
-      stream.members['239307034305101824'].read();
-    }
-
-    // stream.pipe(fs.createWriteStream('./everyone.wav'));
-
-
-    stream.on('done', function () {
-      console.log('done');
-    });
-
-    stream.on('incoming', function (SSRC, data) {
-      console.log("Incoming stream data");
-    });
-
-    //The stream fires `done` when it's got nothing else to send to Discord.
-  })
-});
-*/
 
 // bot.on('message', function (user, userID, channelID, message, evt) {
 //   // Our bot needs to know if it will execute a command
