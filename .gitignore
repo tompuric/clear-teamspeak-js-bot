@@ -1,3 +1,7 @@
+auth.json
+*.wav
+*.pcm
+
 # Logs
 logs
 *.log
